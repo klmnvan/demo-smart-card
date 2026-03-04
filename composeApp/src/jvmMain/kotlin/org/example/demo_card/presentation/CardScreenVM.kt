@@ -42,9 +42,11 @@ class CardScreenVM: ViewModel() {
                 try {
                     cardTerminals.waitForChange() // блокирует до изменения
                     val updatedList = cardTerminals.list()
+                    val currentSelId = dataSt.value.selTerminalID
+
                     updData(dataSt.value.copy(listCardTerminal = updatedList))
                 } catch (e: CardException) {
-                    updData(dataSt.value.copy(listCardTerminal = emptyList(), selTerminalID = -1))
+                    updData(dataSt.value.copy(selTerminalID = -1))
                 }
             }
         }

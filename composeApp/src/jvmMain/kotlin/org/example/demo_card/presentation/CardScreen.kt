@@ -23,7 +23,6 @@ fun CardScreen() {
     MaterialTheme {
         val vm = viewModel { CardScreenVM() }
         val state = vm.dataSt.collectAsState()
-
         Column(
             Modifier
                 .fillMaxSize()
@@ -31,21 +30,16 @@ fun CardScreen() {
         ) {
             Text("Настольные считыватели: ")
             SpacerHeight(20.dp)
-            CustomDropDownMenu(
-                state.value.listCardTerminal,
-                state.value.selTerminalID) {
+            CustomDropDownMenu(state.value.listCardTerminal,state.value.selTerminalID) {
                 vm.updData(vm.dataSt.value.copy(selTerminalID = it))
             }
             SpacerHeight(20.dp)
-            Text("Код карты")
+            Text("Код карты: ${state.value.cardUID}")
             SpacerHeight(8.dp)
             Row(modifier = Modifier.fillMaxWidth()) {
                 TextButton(onClick = { vm.getUIDCard() }) {
                     Text("Получить UID")
                 }
-                if(state.value.cardUID.isNotEmpty())
-                    Text("UID карты: ${state.value.cardUID}")
-
             }
         }
     }
