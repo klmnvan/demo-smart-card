@@ -3,16 +3,17 @@ package org.example.demo_card.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.example.demo_card.domain.state.CardScreenSt
+import javax.smartcardio.CardChannel
 import javax.smartcardio.CardException
+import javax.smartcardio.CommandAPDU
 import javax.smartcardio.TerminalFactory
+
 
 class CardScreenVM: ViewModel() {
 
@@ -44,26 +45,38 @@ class CardScreenVM: ViewModel() {
                     updData(dataSt.value.copy(listCardTerminal = updatedList))
                 } catch (e: CardException) {
                     updData(dataSt.value.copy(listCardTerminal = emptyList(), selTerminalID = -1))
-                    val cause = e.cause?.message ?: ""
-                    if ("SCARD_E_NO_READERS_AVAILABLE" in cause) {
-                        restartSmartCardService()
-                    } else {
-                        delay(2000)
-                    }
                 }
             }
         }
     }
 
-    private fun restartSmartCardService() {
+    fun getUIDCard() {
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                // Перезапускаем службу через командную строку
-                Runtime.getRuntime().exec("net stop SCardSvr").waitFor()
-                Runtime.getRuntime().exec("net start SCardSvr").waitFor()
-                delay(1000) // ждём пока служба запустится
-            } catch (e: Exception) {
-                e.printStackTrace()
+            val idTerminal = dataSt.value.selTerminalID
+            if(idTerminal != -1 && dataSt.value.listCardTerminal.isNotEmpty()) {
+                //соединение со считкой
+                val cardIsAppeared = cardTerminals.list()[idTerminal].waitForCardPresent(2_000)
+                if (cardIsAppeared) {
+                    val card = cardTerminals.list()[idTerminal].connect("*")
+                    val channel = card.basicChannel
+                    val getUidApdu = CommandAPDU(
+                        byteArrayOf(0xFF.toByte(), 0xCA.toByte(), 0x00, 0x00, 0x00)
+                    )
+                    val response = channel.transmit(getUidApdu)
+
+                    if (response.sw == 0x9000) {
+                        // Успех — данные это и есть UID
+                        val uid = response.data
+                        val uidHex = uid.joinToString("") { "%02X".format(it) }
+                        updData(dataSt.value.copy(cardUID = uidHex))
+                    } else {
+                        println("Ошибка: SW = ${"%04X".format(response.sw)}")
+                    }
+
+                    card.disconnect(false)
+                }
+
+
             }
         }
     }
