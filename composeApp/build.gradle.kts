@@ -12,6 +12,7 @@ kotlin {
     jvm()
 
     sourceSets {
+        val koin_version = "4.2.0-RC1"
         commonMain.dependencies {
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
@@ -21,6 +22,7 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation("io.insert-koin:koin-core:${koin_version}")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
