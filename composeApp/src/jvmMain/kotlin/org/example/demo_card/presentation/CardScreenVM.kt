@@ -5,14 +5,14 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.example.demo_card.domain.converters.toCardDecimal
+import org.example.demo_card.domain.converters.toWiegand26
 import org.example.demo_card.domain.state.CardScreenSt
 import org.example.demo_card.domain.state.DialogSt
 import javax.smartcardio.Card
-import javax.smartcardio.CardChannel
 import javax.smartcardio.CardException
 import javax.smartcardio.CommandAPDU
 import javax.smartcardio.TerminalFactory
@@ -73,7 +73,10 @@ class CardScreenVM : ViewModel() {
                     if (response.sw == 0x9000) {
                         val uid = response.data
                         val uidHex = uid.joinToString("") { "%02X".format(it) }
-                        updData(dataSt.value.copy(cardUID = uidHex))
+                        updData(dataSt.value.copy(
+                            cardUID_HEX = uidHex,
+                            cardUID_DEC = uid.toCardDecimal(),
+                            cardUID_W26 = uid.toWiegand26()))
                     }
                     connection = null
                 } else openDialog("Не установлено соединение с картой", "Ошибка при чтении ID карты")
@@ -96,7 +99,9 @@ class CardScreenVM : ViewModel() {
                             terminal.waitForCardPresent(0) // 0 = ждать бесконечно
                         }
                         connection = terminal.connect("*")
+                        cardIsAttached(true)
                         terminal.waitForCardAbsent(0)
+                        cardIsAttached(false)
                         connection?.disconnect(true)
                     } catch (e: Exception) {
 
@@ -113,4 +118,9 @@ class CardScreenVM : ViewModel() {
             title = title))
     }
 
+    private fun cardIsAttached(isAttached: Boolean) {
+        updData(dataSt.value.copy(cardIsAttached = isAttached))
+    }
+
 }
+

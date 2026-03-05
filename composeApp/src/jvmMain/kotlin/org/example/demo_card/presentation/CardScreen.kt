@@ -1,6 +1,5 @@
 package org.example.demo_card.presentation
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.example.demo_card.presentation.common.dialogs.DialogError
 import org.example.demo_card.presentation.common.spacers.SpacerHeight
+import org.example.demo_card.presentation.common.spacers.SpacerWidth
 
 @OptIn(ExperimentalMaterialApi::class)
 @Preview(showBackground = true)
@@ -49,17 +49,24 @@ fun CardScreen() {
                     vm.updData(vm.dataSt.value.copy(selTerminalID = it))
                 }
                 SpacerHeight(20.dp)
-                Row(modifier = Modifier.fillMaxWidth()) {
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     TextButton(onClick = { vm.getUIDCard() },
                         colors = ButtonDefaults.textButtonColors(
                             backgroundColor = Color(0xFFFF9800),
                             contentColor = Color.White)
                     ) {
-                        Text("Получить UID")
+                        Text("Сканировать карту")
                     }
+                    SpacerWidth(20.dp)
+                    Text("Статус: ${if (cardIsAttached) "карта приложена" else "карта не обнаружена"}")
                 }
                 SpacerHeight(20.dp)
-                Text("Код карты: ${state.value.cardUID}")
+                if(cardUID_HEX.isNotEmpty()) {
+                    Text("Код карты\n" +
+                            "HEX: ${state.value.cardUID_HEX}\n" +
+                            "W26: ${state.value.cardUID_W26}\n" +
+                            "Десятичный формат: ${state.value.cardUID_DEC}")
+                }
             }
         }
     }
